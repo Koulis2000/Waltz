@@ -6,7 +6,7 @@ if (os.version ~= nil) then -- check if ComputerCraft...
 	installPath = "/lib/waltz/"
 	mode = "CC"
 else
-	print("We are running on OpenComputers")
+	print("We are running on OpenComputers.")
 	-- it's OpenComputers...
 	installPath = "/bin/waltz/"
 	mode = "OC"
@@ -34,7 +34,7 @@ if (libPath == nil) then
 end
 
 --firstDraw = true
-firstDraw = false
+firstDraw = true
 local previousBlankTime = 0
 local redraw = true
 local freeMemLabel
@@ -57,8 +57,6 @@ function Waltz.create(window, theme, headerText, updateInterval)
 		sizeX = window.size[1]
 		sizeY = window.size[2]
 	end
-	--print(size['x'] .. " " .. size['y'])
-	--os.sleep(1)
 	local cursorX, cursorY 
 	if (mode == "CC") then
 		cursorX, cursorY = window.getCursorPos()
@@ -163,11 +161,6 @@ function Waltz:printCentered(text, posY)
 end
 
 function Waltz:printAt(text, posX, posY)
-	local failed, err = pcall(print(posX .. " X " .. posY))
-	if failed then
-		print("Error printing \""..text.."\":"..err)
-	end
-	--os.sleep(1)
 	if (mode == "CC") then
 		self.window.setCursorPos(posX, posY)
 		self.window.write(text)
@@ -181,6 +174,10 @@ function Waltz:printAt(text, posX, posY)
 end
 
 function Waltz:addComponent(c)
+	if not c then
+		print(debug.traceback())
+		error("Attempted to add component, but the component was nil!")
+	end
 	local cNum = 1
 	if (self.components ~= nil) then
 		cNum = #self.components + 1
@@ -322,9 +319,6 @@ end
 function Waltz:run(tasks)
 	self:draw()
 	while true do 
-		if (tasks ~= nil) then
-			tasks()
-		end
 		if (self.exit == true) then
 			self:blank()
 			if (mode == "OC") then
@@ -336,17 +330,23 @@ function Waltz:run(tasks)
 				error("Not an error: program closed.")
 			end
 		end
-		if (tasks ~= nil) then
-			tasks()
-		end
 		if (mode == "OC") then
 			self:draw()
 			self:detectClick()
 		end
 		if (mode == "CC") then
-			parallel.waitForAny(function() self:draw() end, function() self:detectClick() end)
+			if (tasks == nil) then
+				self:jobs()
+			else
+				parallel.waitForAll(function() tasks() end, function() self:jobs() end)
+			end
 		end
+		sleep(0)
 	end
+end
+
+function Waltz:jobs()
+	parallel.waitForAny(function() self:draw() end, function() self:detectClick() end)
 end
 
 function Waltz:drawFreeMem()
@@ -361,7 +361,7 @@ function Waltz:drawFreeMem()
 	end
 	if (mode == "CC") then
 		-- CC does not have a concept of memory, so we'll print the time
-		local labelText = os.time()
+		local labelText = textutils.formatTime(os.time(), true)
 		if (freeMemLabel == nil) then
 			freeMemLabel = Label.create(self, labelText, self.theme['titleForegroundColour'], self.theme['titleBackgroundColour'], 1, 1, nil, 1)
 		end

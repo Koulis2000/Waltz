@@ -20,9 +20,6 @@ function Button.create(gui, text, foregroundColour, backgroundColour, x, y, widt
 	self.size = { x = width, y = height }
 	self.action = nil
 	self.type = "button"
-	print("Created button "..self.text.."!")
-	print("	position: "..self.pos['x'].." x "..self.pos['y'])
-	print("	size: "..self.size['x'].." x "..self.size['y'])
 	return self
 end
 
@@ -94,7 +91,6 @@ function Button:setAction(action)
 end
 
 function Button:draw(gui)
-	print("Drawing" .. self:getText() .. "!")
 	local colours = self:getColours()
 	local pos = self:getPos()
 	local size = self:getSize()

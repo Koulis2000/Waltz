@@ -69,7 +69,7 @@ sleep(2.5)
 
 --print("Creating GUI...")
 local g = Waltz.create(w, theme, "Waltz Demo")
-local btnClose = Button.create(g, "X", colours.red, titleBackgroundColour, sizeX, 1, 1, 1)
+local btnClose = Button.create(g, "ˣ", colours.red, titleBackgroundColour, sizeX, 1, 1, 1)
 btnClose:setAction(function() g.exit = true end)
 g:addComponent(btnClose)
 
