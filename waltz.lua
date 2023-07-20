@@ -38,6 +38,7 @@ firstDraw = true
 local previousBlankTime = 0
 local redraw = true
 local freeMemLabel
+local fps = 0
 
 --Meta class
 --Gui = {window, theme, headerText, size['x'], size['y'], cpx, cpy, components = {}}
@@ -74,6 +75,7 @@ function Waltz.create(window, theme, headerText, updateInterval)
 	self.components = {}
 	self.exit = false
 	self.updateInterval = updateInterval or 5
+	self.fps = 0
 	self:setColours()
 	return self
 end
@@ -318,6 +320,8 @@ end
 
 function Waltz:run(tasks)
 	self:draw()
+	local previousFrameTime = 0
+	local currentFrameTime = 1 -- we'll just initialise these to something, they will get set during the first loop iteration
 	while true do 
 		if (self.exit == true) then
 			self:blank()
@@ -341,7 +345,10 @@ function Waltz:run(tasks)
 				parallel.waitForAll(function() tasks() end, function() self:jobs() end)
 			end
 		end
-		sleep(0)
+		--sleep(0)
+		currentFrameTime = os.clock()
+		self:calculateFPS(previousFrameTime, currentFrameTime)
+		previousFrameTime = currentFrameTime
 	end
 end
 
@@ -357,7 +364,6 @@ function Waltz:drawFreeMem()
 		else
 			freeMemLabel:setText(labelText)
 		end
-		freeMemLabel:draw(self)
 	end
 	if (mode == "CC") then
 		-- CC does not have a concept of memory, so we'll print the time
@@ -366,8 +372,15 @@ function Waltz:drawFreeMem()
 			freeMemLabel = Label.create(self, labelText, self.theme['titleForegroundColour'], self.theme['titleBackgroundColour'], 1, 1, nil, 1)
 		end
 		freeMemLabel:setText(labelText)
-		freeMemLabel:draw(self)
 	end
+	if (self.fps) then
+		freeMemLabel:setText(freeMemLabel:getText() .. " FPS: " .. self.fps)
+	end
+	freeMemLabel:draw(self)
+end
+
+function Waltz:calculateFPS(previousFrameTime, currentFrameTime)
+	self.fps = round(1 / (currentFrameTime - previousFrameTime))
 end
 
 function Waltz:calculateTitlePos(titleLength, posX, posY, sizeX, sizeY) 
