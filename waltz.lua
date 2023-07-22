@@ -27,6 +27,7 @@ local label = require('label')
 local progressbar = require('progressbar')
 local verticalprogressbar = require('verticalprogressbar')
 local panel = require('panel')
+local advancedpanel = require('advancedpanel')
 local icon = require('icon')
 local inspect = require('inspect')
 if (libPath == nil) then
