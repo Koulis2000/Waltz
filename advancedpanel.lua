@@ -2,19 +2,17 @@
 AdvancedPanel = {}
 AdvancedPanel.__index = AdvancedPanel
 
-function AdvancedPanel.create(gui, title, alignment, x, y, width, height, borders, corners, borderChars, cornerChars)
+function AdvancedPanel.create(gui, title, titleColor, alignment, x, y, width, height, borderStyle)
 	local self = setmetatable({}, AdvancedPanel)
 	self.gui = gui
 	self.pos = { x = x, y = y }
 	self.size = { x = width, y = height }
-	self.borders = borders or ""
-	self.corners = corners or ""
-	self.borderChars = borderChars or {}
-	self.cornerChars = cornerChars or {}
 	self.title = title
+	self.titleColor = titleColor
 	self.alignment = alignment
 	self.components = {}
 	self.type = "advancedpanel"
+	self.borderStyle = borderStyle or {}
 	return self
 end
 
@@ -49,83 +47,91 @@ function AdvancedPanel:setText(text)
 end
 
 function AdvancedPanel:draw()
-	self:drawBorder() 
-	self:drawTitle("left")
+	self:drawBorder(self.borderStyle) 
+	self:drawTitle(self.title, self.titleColor, self.alignment)
 	for i = 1, #self.components, 1 do
 		comp = self.components[i]
 		comp:draw(self.gui)
 	end
 end
 
-function AdvancedPanel:drawBorder()
+function AdvancedPanel:drawBorder(borderStyle)
+	
+    local borders = borderStyle.borders or ""
+    local corners = borderStyle.corners or ""
+    local borderChars = borderStyle.borderChars or (mode == "OC" and { t = "─", b = "─", l = "│", r = "│" } or (mode == "CC" and { t = "¯", b = "_", l = "|", r = "|" }))
+    local cornerChars = borderStyle.cornerChars or (mode == "OC" and { tl = "┌", tr = "┐", bl = "└", br = "┘" } or (mode == "CC" and { tl = "/", tr = "\\", bl = "\\", br = "/" }))
+    local borderColors = borderStyle.borderColors or {}
+    local cornerColors = borderStyle.cornerColors or {}
+
 	local function hasCharacter(str, char)
 		return str:find(char, 1, true) ~= nil
 	end
 
-	local function drawBorderChar(x, y, char)
-		self.gui:printAt(char, x, y)
-	end
-
-	if self.borders == "" and self.corners == "" then
+	if borders == "" and corners == "" then
 		return -- No borders or corners specified, no need to draw anything
 	end
 
-	local left = hasCharacter(self.borders, "l")
-	local right = hasCharacter(self.borders, "r")
-	local top = hasCharacter(self.borders, "t")
-	local bottom = hasCharacter(self.borders, "b")
+	local left = hasCharacter(borders, "l")
+	local right = hasCharacter(borders, "r")
+	local top = hasCharacter(borders, "t")
+	local bottom = hasCharacter(borders, "b")
 
-	local tlCorner = hasCharacter(self.corners, "tl")
-	local trCorner = hasCharacter(self.corners, "tr")
-	local blCorner = hasCharacter(self.corners, "bl")
-	local brCorner = hasCharacter(self.corners, "br")
+	local tlCorner = hasCharacter(corners, "tl")
+	local trCorner = hasCharacter(corners, "tr")
+	local blCorner = hasCharacter(corners, "bl")
+	local brCorner = hasCharacter(corners, "br")
+
+	local colorRevert = self.gui.window.getTextColor()
 
 	if top then
-		for x = self.pos['x'] + 1, self.pos['x'] + self.size['x'] - 2 do
-			drawBorderChar(x, self.pos['y'], self.borderChars["t"] or "-")
-		end
+		self.gui.window.setTextColor(borderColors["t"])
+		self.gui:fill(self.pos['x'] + 1, self.pos['y'], self.size['x'] - 2, 1, borderChars["t"])
 	end
 
 	if bottom then
-		for x = self.pos['x'] + 1, self.pos['x'] + self.size['x'] - 2 do
-			drawBorderChar(x, self.pos['y'] + self.size['y'] - 1, self.borderChars["b"] or "-")
-		end
+		self.gui.window.setTextColor(borderColors["b"])
+		self.gui:fill(self.pos['x'] + 1, self.pos['y'] + self.size['y'] - 1, self.size['x'] - 2, 1, borderChars["b"])
 	end
 
 	if left then
-		for y = self.pos['y'] + 1, self.pos['y'] + self.size['y'] - 2 do
-			drawBorderChar(self.pos['x'], y, self.borderChars["l"] or "|")
-		end
+		self.gui.window.setTextColor(borderColors["l"])
+		self.gui:fill(self.pos['x'], self.pos['y'] + 1, 1, self.size['y'] - 2, borderChars["l"])
 	end
 
 	if right then
-		for y = self.pos['y'] + 1, self.pos['y'] + self.size['y'] - 2 do
-			drawBorderChar(self.pos['x'] + self.size['x'] - 1, y, self.borderChars["r"] or "|")
-		end
+		self.gui.window.setTextColor(borderColors["r"])
+		self.gui:fill(self.pos['x'] + self.size['x'] - 1, self.pos['y'] + 1, 1, self.size['y'] - 2, borderChars["r"])
 	end
 
 	if tlCorner then
-		drawBorderChar(self.pos['x'], self.pos['y'], self.cornerChars["tl"] or "/")
+		self.gui.window.setTextColor(cornerColors["tl"])
+		self.gui:printAt(cornerChars["tl"], self.pos['x'], self.pos['y'])
 	end
 
 	if trCorner then
-		drawBorderChar(self.pos['x'] + self.size['x'] - 1, self.pos['y'], self.cornerChars["tr"] or "\\")
+		self.gui.window.setTextColor(cornerColors["tr"])
+		self.gui:printAt(cornerChars["tr"], self.pos['x'] + self.size['x'] - 1, self.pos['y'])
 	end
 
 	if blCorner then
-		drawBorderChar(self.pos['x'], self.pos['y'] + self.size['y'] - 1, self.cornerChars["bl"] or "\\")
+		self.gui.window.setTextColor(cornerColors["bl"])
+		self.gui:printAt(cornerChars["bl"], self.pos['x'], self.pos['y'] + self.size['y'] - 1)
 	end
 
 	if brCorner then
-		drawBorderChar(self.pos['x'] + self.size['x'] - 1, self.pos['y'] + self.size['y'] - 1, self.cornerChars["br"] or "/")
+		self.gui.window.setTextColor(cornerColors["br"])
+		self.gui:printAt(cornerChars["br"], self.pos['x'] + self.size['x'] - 1, self.pos['y'] + self.size['y'] - 1)
 	end
+
+	self.gui.window.setTextColor(colorRevert)
 end
 
-function AdvancedPanel:drawTitle(alignment)
-	if self.title ~= nil then
+function AdvancedPanel:drawTitle(title, titleColor, alignment)
+	if title ~= nil then
+		local colorRevert = self.gui.window.getTextColor()
 		local titleLength = #self.title
 		local titleX
-
 		if alignment == "center" then
 			titleX = self.pos['x'] + math.floor((self.size['x'] - #titleString) / 2)
 		elseif alignment == "right" then
@@ -133,7 +139,9 @@ function AdvancedPanel:drawTitle(alignment)
 		else
 			titleX = self.pos['x']
 		end
+		self.gui.window.setTextColor(titleColor)
 		self.gui:printAt(title, titleX, self.pos['y'])
+		self.gui.window.setTextColor(colorRevert)
 	end
 end
 
